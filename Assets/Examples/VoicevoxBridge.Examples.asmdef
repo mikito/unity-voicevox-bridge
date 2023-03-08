@@ -1,0 +1,16 @@
+{
+    "name": "VoicevoxBridge.Examples",
+    "rootNamespace": "",
+    "references": [
+        "GUID:73db15c10df154adfab6aa9c87c35034"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
