@@ -10,7 +10,7 @@ Unity上でVOICEVOX EngineのAPIを利用し、簡単に合成音声の再生が
 - [VOICEVOX Engine](https://github.com/VOICEVOX/voicevox_engine)
 
 ## Package Manager
-UPMを利用してインストールする場合は、PacakgeMangerからgit URLとして https://github.com/mikito/unity-voicevox-bridge.git?path=Assets/VoicevoxBridge/ を追加してください。
+UPMを利用してインストールする場合は、PacakgeMangerからgit URLとして`https://github.com/mikito/unity-voicevox-bridge.git?path=Assets/VoicevoxBridge/`を追加してください。
 
 もしくは、Packages/manifest.jsonに以下を追記してください。
 
