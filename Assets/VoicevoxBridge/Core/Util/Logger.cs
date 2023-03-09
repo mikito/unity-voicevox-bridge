@@ -4,11 +4,16 @@ namespace VoicevoxBridge
 {
     public class Logger
     {
-        public bool enable = true;
+        public bool enableLog = true;
 
         public void Log(string text)
         {
-            if (enable) Debug.Log($"[VOICEVOX] {text}");
+            if (enableLog) Debug.Log($"[VOICEVOX] {text}");
+        }
+
+        public void LogWarning(string text)
+        {
+            Debug.LogWarning($"[VOICEVOX] {text}");
         }
     }
 }

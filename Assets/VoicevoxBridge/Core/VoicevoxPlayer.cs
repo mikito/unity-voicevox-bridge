@@ -55,12 +55,14 @@ namespace VoicevoxBridge
         VoicevoxEngineAPI voicevoxAPI = null;
         SemaphoreSlim semaphore = null;
 
-        public bool EnableLog { get => logger.enable; set => logger.enable = value; }
+        public bool EnableLog { get => logger.enableLog; set => logger.enableLog = value; }
 
         public VoicevoxPlayer(string voicevoxEngineURL) : this(voicevoxEngineURL, SharedAudioSource) { }
 
         public VoicevoxPlayer(string voicevoxEngineURL, AudioSource audioSource)
         {
+            if (audioSource == null) throw new ArgumentException("Audio Source is null.");
+
             this.audioSource = audioSource;
             voicevoxAPI = new VoicevoxEngineAPI(voicevoxEngineURL, logger);
             semaphore = new SemaphoreSlim(MaxRequestConcurrency, MaxRequestConcurrency);
@@ -110,16 +112,29 @@ namespace VoicevoxBridge
 
         async Task PlayAudioClip(Voice voice, CancellationToken cancellationToken)
         {
+            if (audioSource == null)
+            {
+                logger.LogWarning("Audio Source has already been destroyed.");
+                return;
+            }
+
             audioSource.clip = voice.AudioClip;
             audioSource.Play();
 
             while (true)
             {
                 await Task.Delay(1000 / 30, cancellationToken);
-                if(cancellationToken.IsCancellationRequested)
+
+                if (cancellationToken.IsCancellationRequested)
                 {
-                    audioSource.Stop();
+                    if (audioSource != null) audioSource.Stop();
                     cancellationToken.ThrowIfCancellationRequested();
+                }
+
+                if (audioSource == null)
+                {
+                    logger.LogWarning("Audio Source has already been destroyed.");
+                    break;
                 }
                 if (!audioSource.isPlaying) break;
             }
