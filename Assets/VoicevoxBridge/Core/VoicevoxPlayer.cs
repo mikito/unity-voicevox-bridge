@@ -116,7 +116,11 @@ namespace VoicevoxBridge
             while (true)
             {
                 await Task.Delay(1000 / 30, cancellationToken);
-                cancellationToken.ThrowIfCancellationRequested();
+                if(cancellationToken.IsCancellationRequested)
+                {
+                    audioSource.Stop();
+                    cancellationToken.ThrowIfCancellationRequested();
+                }
                 if (!audioSource.isPlaying) break;
             }
         }
