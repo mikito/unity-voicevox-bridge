@@ -32,16 +32,20 @@ namespace VoicevoxBridge
                 {
                     logger.Log("AudioQuery request success");
                     var jsonString = await response.Content.ReadAsStringAsync();
+                    cancellationToken.ThrowIfCancellationRequested();
                     return jsonString;
                 }
                 else
                 {
                     var message = await response.Content.ReadAsStringAsync();
+                    cancellationToken.ThrowIfCancellationRequested();
                     throw new WebException($"AudioQuery Request failed: {(int)response.StatusCode} {response.StatusCode}\n{message}");
                 }
             }
+            catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
+                // Unnecessary SocketException occurs when stopping play in Unity Editor.
                 cancellationToken.ThrowIfCancellationRequested();
                 throw e;
             }
@@ -60,16 +64,21 @@ namespace VoicevoxBridge
                 if (response.IsSuccessStatusCode)
                 {
                     logger.Log("Synthesis request success");
-                    return await response.Content.ReadAsByteArrayAsync();
+                    var bytes = await response.Content.ReadAsByteArrayAsync();
+                    cancellationToken.ThrowIfCancellationRequested();
+                    return bytes;
                 }
                 else
                 {
                     var message = await response.Content.ReadAsStringAsync();
+                    cancellationToken.ThrowIfCancellationRequested();
                     throw new WebException($"Synthesis Request failed: {(int)response.StatusCode} {response.StatusCode}\n{message}");
                 }
             }
+            catch (OperationCanceledException) { throw; }
             catch (Exception e)
             {
+                // Unnecessary SocketException occurs when stopping play in Unity Editor.
                 cancellationToken.ThrowIfCancellationRequested();
                 throw e;
             }
