@@ -55,6 +55,8 @@ namespace VoicevoxBridge
         VoicevoxEngineAPI voicevoxAPI = null;
         SemaphoreSlim semaphore = null;
 
+        bool disposed = false;
+
         public bool EnableLog { get => logger.enableLog; set => logger.enableLog = value; }
 
         public VoicevoxPlayer(string voicevoxEngineURL) : this(voicevoxEngineURL, SharedAudioSource) { }
@@ -70,6 +72,7 @@ namespace VoicevoxBridge
 
         public async Task<Voice> CreateVoice(int speaker, string text, CancellationToken cancellationToken = default)
         {
+            if (disposed) throw new ObjectDisposedException(GetType().FullName);
             var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken).Token;
 
             await semaphore.WaitAsync(linkedToken);
@@ -81,12 +84,13 @@ namespace VoicevoxBridge
             }
             finally
             {
-                semaphore.Release();
+                if (!disposed) semaphore.Release();
             }
         }
 
         public async Task Play(Voice voice, CancellationToken cancellationToken = default, bool autoReleaseVoice = true)
         {
+            if (disposed) throw new ObjectDisposedException(GetType().FullName);
             if (voice.IsDisposed) throw new ArgumentException("This voice has already been disposed.");
 
             var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken).Token;
@@ -103,6 +107,7 @@ namespace VoicevoxBridge
 
         public async Task PlayOneShot(int speaker, string text, CancellationToken cancellationToken = default)
         {
+            if (disposed) throw new ObjectDisposedException(GetType().FullName);
             var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken).Token;
             using (var voice = await CreateVoice(speaker, text, linkedToken))
             {
@@ -142,8 +147,14 @@ namespace VoicevoxBridge
 
         public void Dispose()
         {
-            cts.Cancel();
-            cts.Dispose();
+            if (!disposed)
+            {
+                cts.Cancel();
+                cts.Dispose();
+                voicevoxAPI.Dispose();
+                semaphore.Dispose();
+                disposed = true;
+            }
         }
     }
 }

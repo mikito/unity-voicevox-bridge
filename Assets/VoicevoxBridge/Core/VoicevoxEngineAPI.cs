@@ -7,7 +7,7 @@ using System.Net;
 
 namespace VoicevoxBridge
 {
-    public class VoicevoxEngineAPI
+    public class VoicevoxEngineAPI : IDisposable
     {
         HttpClient httpClient;
         Uri engineServerURL;
@@ -30,7 +30,7 @@ namespace VoicevoxBridge
                 var response = await httpClient.PostAsync(url, null, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
-                    logger.Log("AudioQuery request success");
+                    logger.Log("AudioQuery request success.");
                     var jsonString = await response.Content.ReadAsStringAsync();
                     cancellationToken.ThrowIfCancellationRequested();
                     return jsonString;
@@ -39,15 +39,12 @@ namespace VoicevoxBridge
                 {
                     var message = await response.Content.ReadAsStringAsync();
                     cancellationToken.ThrowIfCancellationRequested();
-                    throw new WebException($"AudioQuery Request failed: {(int)response.StatusCode} {response.StatusCode}\n{message}");
+                    throw new WebException($"AudioQuery request failed. : {(int)response.StatusCode} {response.StatusCode}\n{message}");
                 }
             }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception e)
+            catch (OperationCanceledException e)
             {
-                // Unnecessary SocketException occurs when stopping play in Unity Editor.
-                cancellationToken.ThrowIfCancellationRequested();
-                throw e;
+                throw new OperationCanceledException("AudioQuery request is canceled. ", e);
             }
         }
 
@@ -63,7 +60,7 @@ namespace VoicevoxBridge
                 var response = await httpClient.PostAsync(url, content, cancellationToken);
                 if (response.IsSuccessStatusCode)
                 {
-                    logger.Log("Synthesis request success");
+                    logger.Log("Synthesis request success.");
                     var bytes = await response.Content.ReadAsByteArrayAsync();
                     cancellationToken.ThrowIfCancellationRequested();
                     return bytes;
@@ -72,16 +69,18 @@ namespace VoicevoxBridge
                 {
                     var message = await response.Content.ReadAsStringAsync();
                     cancellationToken.ThrowIfCancellationRequested();
-                    throw new WebException($"Synthesis Request failed: {(int)response.StatusCode} {response.StatusCode}\n{message}");
+                    throw new WebException($"Synthesis request failed. : {(int)response.StatusCode} {response.StatusCode}\n{message}");
                 }
             }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception e)
+            catch (OperationCanceledException e)
             {
-                // Unnecessary SocketException occurs when stopping play in Unity Editor.
-                cancellationToken.ThrowIfCancellationRequested();
-                throw e;
+                throw new OperationCanceledException("Synthesis request canceled.", e);
             }
+        }
+
+        public void Dispose()
+        {
+            httpClient.Dispose();
         }
     }
 }
