@@ -78,8 +78,8 @@ namespace VoicevoxBridge
             await semaphore.WaitAsync(linkedToken);
             try
             {
-                var jsonQuery = await voicevoxAPI.AudioQuery(speaker, text, linkedToken);
-                using (var stream = await voicevoxAPI.Synthesis(speaker, jsonQuery, linkedToken))
+                var jsonQuery = await voicevoxAPI.AudioQueryAsync(speaker, text, linkedToken);
+                using (var stream = await voicevoxAPI.SynthesisAsync(speaker, jsonQuery, linkedToken))
                 {
                     var clip = await AudioClipUtil.CreateFromStreamAsync(stream, linkedToken);
                     return new Voice(speaker, text, clip);
@@ -100,7 +100,7 @@ namespace VoicevoxBridge
 
             try
             {
-                await PlayAudioClip(voice, linkedToken);
+                await PlayAudioClipAsync(voice, linkedToken);
             }
             finally
             {
@@ -114,11 +114,11 @@ namespace VoicevoxBridge
             var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken).Token;
             using (var voice = await CreateVoice(speaker, text, linkedToken))
             {
-                await PlayAudioClip(voice, linkedToken);
+                await PlayAudioClipAsync(voice, linkedToken);
             }
         }
 
-        async Task PlayAudioClip(Voice voice, CancellationToken cancellationToken)
+        async Task PlayAudioClipAsync(Voice voice, CancellationToken cancellationToken)
         {
             if (audioSource == null)
             {

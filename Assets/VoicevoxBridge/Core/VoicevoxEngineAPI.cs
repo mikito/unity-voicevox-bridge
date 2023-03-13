@@ -21,7 +21,7 @@ namespace VoicevoxBridge
             this.logger = logger;
         }
 
-        public async Task<string> AudioQuery(int speaker, string text, CancellationToken cancellationToken = default)
+        public async Task<string> AudioQueryAsync(int speaker, string text, CancellationToken cancellationToken = default)
         {
             string url = $"{engineServerURL}audio_query?speaker={speaker}&text={text}";
             logger.Log("request: " + url);
@@ -51,7 +51,7 @@ namespace VoicevoxBridge
             }
         }
 
-        public async Task<Stream> Synthesis(int speaker, string jsonQuery, CancellationToken cancellationToken = default)
+        public async Task<Stream> SynthesisAsync(int speaker, string jsonQuery, CancellationToken cancellationToken = default)
         {
             string url = $"{engineServerURL}synthesis?speaker={speaker}";
             logger.Log("request: " + url);
