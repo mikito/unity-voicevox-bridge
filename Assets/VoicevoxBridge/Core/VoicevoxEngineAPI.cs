@@ -8,7 +8,7 @@ using System.IO;
 
 namespace VoicevoxBridge
 {
-    public class VoicevoxEngineAPI : IDisposable
+    internal class VoicevoxEngineAPI : IDisposable
     {
         HttpClient httpClient;
         Uri engineServerURL;
