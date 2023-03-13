@@ -63,33 +63,31 @@ namespace VoicevoxBridge
 
                 try
                 {
-                    try
-                    {
-                        response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                    response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
 
-                        if (response.IsSuccessStatusCode)
-                        {
-                            logger.Log("Synthesis request success.");
-                            var stream = await response.Content.ReadAsStreamAsync();
-                            cancellationToken.ThrowIfCancellationRequested();
-                            return stream;
-                        }
-                        else
-                        {
-                            var message = await response.Content.ReadAsStringAsync();
-                            cancellationToken.ThrowIfCancellationRequested();
-                            throw new WebException($"Synthesis request failed. : {(int)response.StatusCode} {response.StatusCode}\n{message}");
-                        }
-                    }
-                    catch
+                    if (response.IsSuccessStatusCode)
                     {
-                        response?.Dispose();
-                        throw;
+                        logger.Log("Synthesis request success.");
+                        var stream = await response.Content.ReadAsStreamAsync();
+                        cancellationToken.ThrowIfCancellationRequested();
+                        return stream;
+                    }
+                    else
+                    {
+                        var message = await response.Content.ReadAsStringAsync();
+                        cancellationToken.ThrowIfCancellationRequested();
+                        throw new WebException($"Synthesis request failed. : {(int)response.StatusCode} {response.StatusCode}\n{message}");
                     }
                 }
-                catch (OperationCanceledException e)
+                catch (Exception e)
                 {
-                    throw new OperationCanceledException("Synthesis request canceled.", e);
+                    response?.Dispose();
+
+                    if (e is OperationCanceledException)
+                    {
+                        throw new OperationCanceledException("Synthesis request canceled.", e);
+                    }
+                    throw;
                 }
             }
         }
