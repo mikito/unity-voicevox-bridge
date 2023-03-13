@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using System.IO;
 using System.Threading.Tasks;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.TestTools;
 using VoicevoxBridge;
@@ -21,7 +22,7 @@ public class AudioClipUtilTest
 
             using (var fileStream = new FileStream(testingAudioPath, FileMode.Open, FileAccess.Read))
             {
-                var clip = await AudioClipUtil.CreateFromStreamAsync(fileStream);
+                var clip = await AudioClipUtil.CreateFromStreamAsync(fileStream, default(CancellationToken));
                 Assert.That(clip.channels, Is.EqualTo(1));
                 Assert.That(clip.frequency, Is.EqualTo(frequency));
                 Assert.That(clip.samples, Is.EqualTo((fileSize - 44) / 2)); // (filesize - chank1 size) / 2 bytes[16 bit])

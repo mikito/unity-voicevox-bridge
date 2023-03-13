@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace VoicevoxBridge
 {
@@ -9,7 +10,7 @@ namespace VoicevoxBridge
     {
         public static int BufferSize = 4096;
 
-        public static async Task<AudioClip> CreateFromStreamAsync(Stream stream)
+        public static async Task<AudioClip> CreateFromStreamAsync(Stream stream, CancellationToken cancellationToken)
         {
             byte[] ftmChank = new byte[44];
 
@@ -34,7 +35,7 @@ namespace VoicevoxBridge
                 int offset = 0;
                 int read;
 
-                while ((read = await stream.ReadAsync(readBuffer, 0, readBuffer.Length)) > 0)
+                while ((read = await stream.ReadAsync(readBuffer, 0, readBuffer.Length, cancellationToken)) > 0)
                 {
                     // Supports only 16-bit quantization, and single channel.
                     for (int i = 0; i < read / bytePerSample; i++)
@@ -59,7 +60,11 @@ namespace VoicevoxBridge
             catch (Exception e)
             {
                 if (audioClip != null) UnityEngine.Object.Destroy(audioClip);
-                throw new IOException("AudioClipUtil: WAV data decode failed.", e);
+
+                if (!(e is OperationCanceledException))
+                {
+                    throw new IOException("AudioClipUtil: WAV data decode failed.", e);
+                }
             }
 
             return audioClip;
