@@ -8,7 +8,7 @@ namespace VoicevoxBridge
 {
     public class AudioClipUtil
     {
-        public static int BufferSize = 4096;
+        public static int BufferSize = 1024 * 32;
 
         public static async Task<AudioClip> CreateFromStreamAsync(Stream stream, CancellationToken cancellationToken)
         {
