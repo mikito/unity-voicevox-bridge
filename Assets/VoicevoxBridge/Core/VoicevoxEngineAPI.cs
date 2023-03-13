@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Text;
 using System.Net;
+using System.IO;
 
 namespace VoicevoxBridge
 {
@@ -27,19 +28,21 @@ namespace VoicevoxBridge
 
             try
             {
-                var response = await httpClient.PostAsync(url, null, cancellationToken);
-                if (response.IsSuccessStatusCode)
+                using (var response = await httpClient.PostAsync(url, null, cancellationToken))
                 {
-                    logger.Log("AudioQuery request success.");
-                    var jsonString = await response.Content.ReadAsStringAsync();
-                    cancellationToken.ThrowIfCancellationRequested();
-                    return jsonString;
-                }
-                else
-                {
-                    var message = await response.Content.ReadAsStringAsync();
-                    cancellationToken.ThrowIfCancellationRequested();
-                    throw new WebException($"AudioQuery request failed. : {(int)response.StatusCode} {response.StatusCode}\n{message}");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        logger.Log("AudioQuery request success.");
+                        var jsonString = await response.Content.ReadAsStringAsync();
+                        cancellationToken.ThrowIfCancellationRequested();
+                        return jsonString;
+                    }
+                    else
+                    {
+                        var message = await response.Content.ReadAsStringAsync();
+                        cancellationToken.ThrowIfCancellationRequested();
+                        throw new WebException($"AudioQuery request failed. : {(int)response.StatusCode} {response.StatusCode}\n{message}");
+                    }
                 }
             }
             catch (OperationCanceledException e)
@@ -48,33 +51,46 @@ namespace VoicevoxBridge
             }
         }
 
-        public async Task<byte[]> Synthesis(int speaker, string jsonQuery, CancellationToken cancellationToken = default)
+        public async Task<Stream> Synthesis(int speaker, string jsonQuery, CancellationToken cancellationToken = default)
         {
             string url = $"{engineServerURL}synthesis?speaker={speaker}";
             logger.Log("request: " + url);
 
-            var content = new StringContent(jsonQuery, Encoding.UTF8, "application/json");
+            using (var request = new HttpRequestMessage(HttpMethod.Post, url))
+            {
+                request.Content = new StringContent(jsonQuery, Encoding.UTF8, "application/json");
+                HttpResponseMessage response = null;
 
-            try
-            {
-                var response = await httpClient.PostAsync(url, content, cancellationToken);
-                if (response.IsSuccessStatusCode)
+                try
                 {
-                    logger.Log("Synthesis request success.");
-                    var bytes = await response.Content.ReadAsByteArrayAsync();
-                    cancellationToken.ThrowIfCancellationRequested();
-                    return bytes;
+                    try
+                    {
+                        response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+
+                        if (response.IsSuccessStatusCode)
+                        {
+                            logger.Log("Synthesis request success.");
+                            var stream = await response.Content.ReadAsStreamAsync();
+                            cancellationToken.ThrowIfCancellationRequested();
+                            return stream;
+                        }
+                        else
+                        {
+                            var message = await response.Content.ReadAsStringAsync();
+                            cancellationToken.ThrowIfCancellationRequested();
+                            throw new WebException($"Synthesis request failed. : {(int)response.StatusCode} {response.StatusCode}\n{message}");
+                        }
+                    }
+                    catch
+                    {
+                        response?.Dispose();
+                        throw;
+                    }
                 }
-                else
+                catch (OperationCanceledException e)
                 {
-                    var message = await response.Content.ReadAsStringAsync();
-                    cancellationToken.ThrowIfCancellationRequested();
-                    throw new WebException($"Synthesis request failed. : {(int)response.StatusCode} {response.StatusCode}\n{message}");
+                    throw new OperationCanceledException("Synthesis request canceled.", e);
                 }
-            }
-            catch (OperationCanceledException e)
-            {
-                throw new OperationCanceledException("Synthesis request canceled.", e);
             }
         }
 

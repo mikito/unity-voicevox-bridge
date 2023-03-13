@@ -79,8 +79,11 @@ namespace VoicevoxBridge
             try
             {
                 var jsonQuery = await voicevoxAPI.AudioQuery(speaker, text, linkedToken);
-                var bytes = await voicevoxAPI.Synthesis(speaker, jsonQuery, linkedToken);
-                return new Voice(speaker, text, AudioClipUtil.CreateFromBytes(bytes));
+                using (var stream = await voicevoxAPI.Synthesis(speaker, jsonQuery, linkedToken))
+                {
+                    var clip = await AudioClipUtil.CreateFromStreamAsync(stream);
+                    return new Voice(speaker, text, clip);
+                }
             }
             finally
             {

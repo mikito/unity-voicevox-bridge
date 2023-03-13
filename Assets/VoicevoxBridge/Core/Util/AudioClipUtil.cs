@@ -7,26 +7,7 @@ namespace VoicevoxBridge
 {
     public class AudioClipUtil
     {
-        public static AudioClip CreateFromBytes(byte[] data)
-        {
-            int channels = BitConverter.ToInt16(data, 22);
-            int frequency = BitConverter.ToInt32(data, 24);
-            int length = data.Length - 44;
-            float[] samples = new float[length / 2];
-
-            for (int i = 0; i < length / 2; i++)
-            {
-                short value = BitConverter.ToInt16(data, i * 2 + 44);
-                samples[i] = value / 32768f;
-            }
-
-            AudioClip audioClip = AudioClip.Create("AudioClip", samples.Length, channels, frequency, false);
-            audioClip.SetData(samples, 0);
-
-            return audioClip;
-        }
-
-        const int BufferSize = 4096;
+        public static int BufferSize = 4096;
 
         public static async Task<AudioClip> CreateFromStreamAsync(Stream stream)
         {
@@ -75,7 +56,7 @@ namespace VoicevoxBridge
                     offset += read / 2;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 if (audioClip != null) UnityEngine.Object.Destroy(audioClip);
                 throw new IOException("AudioClipUtil: WAV data decode failed.", e);
