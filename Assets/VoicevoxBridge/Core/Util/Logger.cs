@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace VoicevoxBridge
 {
-    public class Logger
+    internal class Logger
     {
         public bool enableLog = true;
 
