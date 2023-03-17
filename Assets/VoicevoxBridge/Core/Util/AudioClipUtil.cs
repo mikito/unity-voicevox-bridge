@@ -28,33 +28,41 @@ namespace VoicevoxBridge
             AudioClip audioClip = null;
             try
             {
-                audioClip = AudioClip.Create("AudioClip", length / 2, channels, frequency, false);
+                audioClip = AudioClip.Create("AudioClip", length / bytePerSample, channels, frequency, false);
 
                 byte[] readBuffer = new byte[BufferSize];
                 float[] samplesBuffer = new float[BufferSize / bytePerSample];
-                int offset = 0;
-                int read;
+                int samplesOffset = 0;
+                int readBytes;
 
-                while ((read = await stream.ReadAsync(readBuffer, 0, readBuffer.Length, cancellationToken)) > 0)
+                while ((readBytes = await stream.ReadAsync(readBuffer, 0, readBuffer.Length, cancellationToken)) > 0)
                 {
+                    if (readBytes % 2 != 0)
+                    {
+                        // If an odd number of bytes were read, read an additional 1 byte
+                        await stream.ReadAsync(readBuffer, readBytes, 1, cancellationToken);
+                        readBytes++;
+                    }
+
+                    int readSamples = readBytes / bytePerSample;
+
                     // Supports only 16-bit quantization, and single channel.
-                    for (int i = 0; i < read / bytePerSample; i++)
+                    for (int i = 0; i < readSamples; i++)
                     {
                         short value = BitConverter.ToInt16(readBuffer, i * bytePerSample);
                         samplesBuffer[i] = value / 32768f;
                     }
 
-                    if (read == BufferSize)
+                    if (readBytes == BufferSize)
                     {
-                        audioClip.SetData(samplesBuffer, offset);
+                        audioClip.SetData(samplesBuffer, samplesOffset);
                     }
                     else
                     {
-                        var lastSamples = new float[read / bytePerSample];
-                        Array.Copy(samplesBuffer, lastSamples, read / bytePerSample);
-                        audioClip.SetData(lastSamples, offset);
+                        var segment = new ArraySegment<float>(samplesBuffer, 0, readSamples);
+                        audioClip.SetData(segment.ToArray(), samplesOffset);
                     }
-                    offset += read / 2;
+                    samplesOffset += readSamples;
                 }
             }
             catch (Exception e)
