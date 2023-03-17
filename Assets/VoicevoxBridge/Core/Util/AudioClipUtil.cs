@@ -57,9 +57,8 @@ namespace VoicevoxBridge
                     }
                     else
                     {
-                        var lastSamples = new float[read / bytePerSample];
-                        Array.Copy(samplesBuffer, lastSamples, read / bytePerSample);
-                        audioClip.SetData(lastSamples, offset);
+                        var segment = new ArraySegment<float>(samplesBuffer, 0, read / bytePerSample);
+                        audioClip.SetData(segment.ToArray(), offset);
                     }
                     offset += read / 2;
                 }
