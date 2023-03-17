@@ -37,6 +37,13 @@ namespace VoicevoxBridge
 
                 while ((read = await stream.ReadAsync(readBuffer, 0, readBuffer.Length, cancellationToken)) > 0)
                 {
+                    if (read % 2 != 0)
+                    {
+                        // If an odd number of bytes were read, read an additional 1 byte
+                        await stream.ReadAsync(readBuffer, read, 1, cancellationToken);
+                        read++;
+                    }
+
                     // Supports only 16-bit quantization, and single channel.
                     for (int i = 0; i < read / bytePerSample; i++)
                     {
